@@ -52,7 +52,7 @@ def main():
 
         dqn.train(num_steps=int(1e7),
                   player=player,
-                  replay_buffer=PrioritizedReplayBuffer(args.buffer_size, 0.5, 0.4),
+                  replay_buffer=PrioritizedReplayBuffer(args.buffer_size, 0.5, 0.4, epsilon=0.1),
                   optimize_op=optimize,
                   train_interval=8,
                   target_interval=args.target_interval,
