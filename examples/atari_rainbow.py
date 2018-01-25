@@ -34,7 +34,8 @@ def main():
 
     with tf.Session() as sess:
         dqn = DQN(*rainbow_models(sess, env.action_space.n,
-                                  gym_space_vectorizer(env.observation_space)))
+                                  gym_space_vectorizer(env.observation_space),
+                                  min_val=-100, max_val=100))
         player = NStepPlayer(BatchedPlayer(env, dqn.online_net), 3)
         optimize = dqn.optimize(learning_rate=args.lr)
 
