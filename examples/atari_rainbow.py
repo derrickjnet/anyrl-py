@@ -54,6 +54,7 @@ def main():
                   player=player,
                   replay_buffer=PrioritizedReplayBuffer(args.buffer_size, 0.5, 0.4),
                   optimize_op=optimize,
+                  train_interval=8,
                   target_interval=args.target_interval,
                   batch_size=args.batch_size,
                   min_buffer_size=args.min_buffer_size,
