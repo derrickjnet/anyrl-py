@@ -2,6 +2,8 @@
 The core implementation of deep Q-learning.
 """
 
+import time
+
 import tensorflow as tf
 
 # pylint: disable=R0902,R0903
@@ -90,11 +92,13 @@ class DQN:
               player,
               replay_buffer,
               optimize_op,
+              train_interval=1,
               target_interval=8192,
               batch_size=32,
               min_buffer_size=20000,
               tf_schedules=(),
-              handle_ep=lambda steps, rew: None):
+              handle_ep=lambda steps, rew: None,
+              timeout=None):
         """
         Run an automated training loop.
 
@@ -108,6 +112,7 @@ class DQN:
           player: the Player for gathering experience.
           replay_buffer: the ReplayBuffer for experience.
           optimize_op: a TF Op to optimize the model.
+          train_interval: timesteps per training step.
           target_interval: number of timesteps between
             target network updates.
           batch_size: the size of experience mini-batches.
@@ -117,27 +122,35 @@ class DQN:
             updated with the number of steps taken.
           handle_ep: called with information about every
             completed episode.
+          timeout: if set, this is a number of seconds
+            after which the training loop should exit.
         """
         sess = self.online_net.session
         sess.run(self.update_target)
         steps_taken = 0
         next_target_update = target_interval
+        next_train_step = train_interval
+        start_time = time.time()
         while steps_taken < num_steps:
+            if timeout is not None and time.time() - start_time > timeout:
+                return
             transitions = player.play()
             for trans in transitions:
                 if trans['is_last']:
                     handle_ep(trans['episode_step'] + 1, trans['total_reward'])
                 replay_buffer.add_sample(trans)
-            steps_taken += len(transitions)
-            for sched in tf_schedules:
-                sched.add_time(sess, len(transitions))
-            if replay_buffer.size >= min_buffer_size:
-                batch = replay_buffer.sample(batch_size)
-                _, losses = sess.run((optimize_op, self.losses), feed_dict=self.feed_dict(batch))
-                replay_buffer.update_weights(batch, losses)
-            if steps_taken >= next_target_update:
-                next_target_update += target_interval
-                sess.run(self.update_target)
+                steps_taken += 1
+                for sched in tf_schedules:
+                    sched.add_time(sess, 1)
+                if replay_buffer.size >= min_buffer_size and steps_taken >= next_train_step:
+                    next_train_step = steps_taken + train_interval
+                    batch = replay_buffer.sample(batch_size)
+                    _, losses = sess.run((optimize_op, self.losses),
+                                         feed_dict=self.feed_dict(batch))
+                    replay_buffer.update_weights(batch, losses)
+                if steps_taken >= next_target_update:
+                    next_target_update = steps_taken + target_interval
+                    sess.run(self.update_target)
 
     def _discounted_rewards(self, rews):
         res = 0
