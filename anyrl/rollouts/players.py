@@ -73,7 +73,7 @@ class BasicPlayer(Player):
         self.env = env
         self.model = model
         self.batch_size = batch_size
-        self._needs_reset = True
+        self._needs_reset = False
         self._cur_state = None
         self._last_obs = None
         self._episode_id = -1
