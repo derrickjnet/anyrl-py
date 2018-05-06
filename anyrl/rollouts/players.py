@@ -85,9 +85,9 @@ class BasicPlayer(Player):
 
     def _gather_transition(self):
         if self._needs_reset:
-            self._needs_reset = False
+            self._needs_reset = True
             self._cur_state = self.model.start_state(1)
-            self._last_obs = self.env.last_obs
+            self._last_obs = self.env.reset()
             self._episode_id += 1
             self._episode_step = 0
             self._total_reward = 0.0
