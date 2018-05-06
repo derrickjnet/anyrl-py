@@ -73,12 +73,12 @@ class BasicPlayer(Player):
         self.env = env
         self.model = model
         self.batch_size = batch_size
-        self._needs_reset = False
+        self._needs_reset = True
         self._cur_state = None
         self._last_obs = None
         self._episode_id = -1
-        self._episode_step = 0
-        self._total_reward = 0.0
+        self._episode_step = self.env.steps
+        self._total_reward = self.env.total_reward
 
     def play(self):
         return [self._gather_transition() for _ in range(self.batch_size)]
@@ -87,7 +87,7 @@ class BasicPlayer(Player):
         if self._needs_reset:
             self._needs_reset = False
             self._cur_state = self.model.start_state(1)
-            self._last_obs = self.env.reset()
+            self._last_obs = self.env.last_obs
             self._episode_id += 1
             self._episode_step = 0
             self._total_reward = 0.0
